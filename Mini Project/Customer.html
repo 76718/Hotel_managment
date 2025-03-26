@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Interface</title>
+    <link rel="stylesheet" href="Customer.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#menu" class="active">Menu</a></li>
+            <li><a href="Owner1/Order.html">Cart</a></li>
+            <li><a href="#track">Track Order</a></li>
+            <li><a href="#login" class="login-link">Login</a></li>
+            <li><a href="#sign up" class="signup-link">Sign Up</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Delicious Food, Delivered to You</h1>
+            <p>Experience our wide variety of mouth-watering dishes prepared by expert chefs using only the freshest ingredients. Order now for a culinary journey delivered to your doorstep.</p>
+            <button class="hero-button" onclick="scrollToMenu()">View Our Menu</button>
+        </div>
+    </section>
+
+    <div class="middle">
+        <!-- Section Heading -->
+        <div class="section-heading fade-in-section">
+            <h2>Our Menu</h2>
+            <p>Discover our delicious food prepared with love and care</p>
+        </div>
+
+        <!-- Category Filters -->
+        <div class="category-filters fade-in-section">
+            <div class="category-filter active" data-category="all">All Items</div>
+            <div class="category-filter" data-category="starters">Starters</div>
+            <div class="category-filter" data-category="main">Main Course</div>
+            <div class="category-filter" data-category="desserts">Desserts</div>
+            <div class="category-filter" data-category="beverages">Beverages</div>
+        </div>
+
+        <!-- Updated Search Bar with Animation -->
+        <div class="Search-bar fade-in-section">
+            <input type="text" id="search-input" placeholder="Search for dishes, cuisines, or ingredients..." autocomplete="off">
+            <div class="search-icon">
+                <i class="fas fa-search"></i>
+                <span class="search-shortcut">⌘ K</span>
+            </div>
+        </div>
+        
+        <div class="menu-container fade-in-section" id="menuItems">
+            <!-- Menu items will be loaded here dynamically -->
+            <div class="loading">Loading menu items...</div>
+        </div>
+    </div>
+    
+    <div class="img-cart">
+        <a href="Owner1/Order.html"><i class="fa-solid fa-cart-shopping"></i></a>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Login</button>
+                    <button class="auth-tab" data-tab="signup">Sign Up</button>
+                </div>
+                
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-form">
+                    <h2>Welcome Back</h2>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group email-input">
+                            <input type="email" id="loginEmail" placeholder="Email Address" required>
+                        </div>
+                        <div class="form-group password-input">
+                            <input type="password" id="loginPassword" placeholder="Password" required>
+                        </div>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p class="auth-switch">Don't have an account? <a href="#" onclick="showSignupForm()">Sign up</a></p>
+                    
+                    <div class="social-login">
+                        <p>Or login with</p>
+                        <div class="social-buttons">
+                            <div class="social-button google-btn">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div class="social-button facebook-btn">
+                                <i class="fab fa-facebook-f"></i>
+                            </div>
+                            <div class="social-button twitter-btn">
+                                <i class="fab fa-twitter"></i>
+                            </div>
+                </div>
+            </div>
+                </div>
+
+                <!-- Signup Form -->
+                <div id="signupForm" class="auth-form" style="display: none;">
+                    <h2>Create Account</h2>
+                    <form onsubmit="handleSignup(event)">
+                        <div class="form-group email-input">
+                            <input type="email" id="signupEmail" placeholder="Email Address" required>
+                        </div>
+                        <div class="form-group password-input">
+                            <input type="password" id="signupPassword" placeholder="Password" required>
+                        </div>
+                        <div class="form-group confirm-password-input">
+                            <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                        </div>
+                        <button type="submit">Create Account</button>
+                    </form>
+                    <p class="auth-switch">Already have an account? <a href="#" onclick="showLoginForm()">Login</a></p>
+                    
+                    <div class="social-login">
+                        <p>Or sign up with</p>
+                        <div class="social-buttons">
+                            <div class="social-button google-btn">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div class="social-button facebook-btn">
+                                <i class="fab fa-facebook-f"></i>
+                            </div>
+                            <div class="social-button twitter-btn">
+                                <i class="fab fa-twitter"></i>
+                            </div>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlYso3uIhbyU711F_1Wt9eJzBtcPOUlKY",
+            authDomain: "hotel-managment-48744.firebaseapp.com",
+            projectId: "hotel-managment-48744",
+            storageBucket: "hotel-managment-48744.firebasestorage.app",
+            messagingSenderId: "91221905283",
+            appId: "1:91221905283:web:cc9a643990db68ebd0b0b6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+
+        // Scroll to menu
+        function scrollToMenu() {
+            document.querySelector('.category-filters').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Fade-in elements on scroll
+        function checkFadeElements() {
+            const fadeElements = document.querySelectorAll('.fade-in-section');
+            
+            fadeElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.classList.add('is-visible');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', checkFadeElements);
+        window.addEventListener('load', checkFadeElements);
+
+        // Auth functions
+        function login(email, password) {
+            // Show loading indicator
+            const submitButton = document.querySelector('#loginForm button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            submitButton.disabled = true;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    console.log('Logged in successfully');
+                    modal.classList.remove('show');
+                    // Update UI to show logged in state
+                    updateAuthUI(userCredential.user);
+                    showSuccess('Logged in successfully!');
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    
+                    // Provide more user-friendly error messages
+                    let errorMessage = 'Login failed: ';
+                    
+                    switch(error.code) {
+                        case 'auth/invalid-email':
+                            errorMessage += 'Invalid email format';
+                            break;
+                        case 'auth/user-not-found':
+                            errorMessage += 'No account found with this email';
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage += 'Incorrect password';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessage += 'Too many failed attempts. Please try again later';
+                            break;
+                        default:
+                            errorMessage += error.message;
+                    }
+                    
+                    showError(errorMessage);
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                });
+        }
+
+        function signUp(email, password) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    console.log('Signed up successfully');
+                    // Create user profile in Firestore
+                    return db.collection('users').doc(userCredential.user.uid).set({
+                        email: email,
+                        role: 'customer',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    modal.classList.remove('show');
+                    // Update UI to show logged in state
+                    updateAuthUI(auth.currentUser);
+                    showSuccess('Welcome! Your account has been created successfully.');
+                })
+                .catch((error) => {
+                    console.error('Sign up error:', error);
+                    showError('Sign up failed: ' + error.message);
+                });
+        }
+
+        function updateAuthUI(user) {
+            const loginLink = document.querySelector('.login-link');
+            const signupLink = document.querySelector('.signup-link');
+            
+            // Check if elements exist before updating
+            if (!loginLink || !signupLink) {
+                console.warn('Auth UI elements not found');
+                return;
+            }
+            
+            if (user) {
+                // User is signed in
+                loginLink.textContent = 'Logout';
+                loginLink.href = '#';
+                loginLink.onclick = (e) => {
+                    e.preventDefault();
+                    auth.signOut();
+                };
+                signupLink.style.display = 'none';
+            } else {
+                // User is signed out
+                loginLink.textContent = 'Login';
+                loginLink.href = '#login';
+                loginLink.onclick = (e) => {
+                    e.preventDefault();
+                    modal.style.display = "block";
+                    showLoginForm();
+                };
+                signupLink.style.display = 'block';
+            }
+        }
+
+        // Listen for auth state changes
+        auth.onAuthStateChanged((user) => {
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => updateAuthUI(user));
+            } else {
+                updateAuthUI(user);
+            }
+        });
+
+        // Modal functionality
+        const modal = document.getElementById("loginModal");
+        const loginLink = document.querySelector('.login-link');
+        const signupLink = document.querySelector('.signup-link');
+        const closeBtn = document.querySelector(".close");
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+
+        // Check if elements exist before adding event listeners
+        if (loginLink) {
+            loginLink.onclick = function(e) {
+                e.preventDefault();
+                modal.style.display = "none"; // Reset first
+                modal.classList.add('show');
+                showLoginForm();
+            }
+        }
+
+        if (signupLink) {
+            signupLink.onclick = function(e) {
+                e.preventDefault();
+                modal.style.display = "none"; // Reset first
+                modal.classList.add('show');
+                showSignupForm();
+            }
+        }
+
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = "none";
+                }, 300); // Wait for animation to complete
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = "none";
+                }, 300); // Wait for animation to complete
+            }
+        }
+
+        if (authTabs.length > 0) {
+            authTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    if (tab.dataset.tab === 'login') {
+                        showLoginForm();
+                    } else {
+                        showSignupForm();
+                    }
+                });
+            });
+        }
+
+        function showLoginForm() {
+            if (!loginForm || !signupForm) return;
+            loginForm.style.display = 'block';
+            signupForm.style.display = 'none';
+            if (authTabs.length > 0) {
+                authTabs[0].classList.add('active');
+                authTabs[1].classList.remove('active');
+            }
+        }
+
+        function showSignupForm() {
+            if (!loginForm || !signupForm) return;
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            if (authTabs.length > 0) {
+                authTabs[0].classList.remove('active');
+                authTabs[1].classList.add('active');
+            }
+        }
+
+        // Auth handlers
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            // Validate fields
+            if (!email || !password) {
+                showError('Please fill in both email and password fields');
+                return;
+            }
+            
+            login(email, password);
+        }
+
+        function handleSignup(event) {
+            event.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match!');
+                return;
+            }
+
+            signUp(email, password);
+        }
+
+        // Menu loading functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMenu();
+            setupCategoryFilters();
+        });
+        
+        // Set up category filters
+        function setupCategoryFilters() {
+            const filters = document.querySelectorAll('.category-filter');
+            
+            filters.forEach(filter => {
+                filter.addEventListener('click', () => {
+                    // Remove active class from all filters
+                    filters.forEach(f => f.classList.remove('active'));
+                    // Add active class to clicked filter
+                    filter.classList.add('active');
+                    
+                    const category = filter.dataset.category;
+                    filterMenuByCategory(category);
+                });
+            });
+        }
+        
+        function filterMenuByCategory(category) {
+            const menuItems = document.querySelectorAll('.item');
+            
+            menuItems.forEach(item => {
+                if (category === 'all' || item.dataset.category === category) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function loadMenu() {
+            const menuContainer = document.getElementById('menuItems');
+            
+            // Show loading indicator
+            menuContainer.innerHTML = '<div class="loading">Loading menu items...</div>';
+            
+            // Get menu items from Firebase
+            db.collection('menu')
+                .get()
+                .then((snapshot) => {
+                    if (snapshot.empty) {
+                        menuContainer.innerHTML = '<p>No menu items available.</p>';
+                        return;
+                    }
+                    
+                    menuContainer.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const item = doc.data();
+                        const itemCard = createMenuItemCard(doc.id, item);
+                        menuContainer.appendChild(itemCard);
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error loading menu:', error);
+                    menuContainer.innerHTML = '<div class="error">Failed to load menu items. Please try again later.</div>';
+                });
+        }
+        
+        function createMenuItemCard(id, item) {
+            const card = document.createElement('div');
+            card.className = 'item';
+            card.dataset.id = id;
+            card.dataset.category = item.category || 'main';
+            
+            // Add default values for missing properties
+            const name = item.name || 'Unnamed Item';
+            const price = parseFloat(item.price) || 0;
+            const description = item.description || 'No description available';
+            const image = item.image || 'https://via.placeholder.com/300x200?text=No+Image';
+            const pieces = item.pieces || 1;
+            const category = item.category || 'main';
+            
+            // Randomize some properties for visual variety
+            const isNew = Math.random() > 0.7;
+            const isPopular = Math.random() > 0.8;
+            const isSpecial = Math.random() > 0.9;
+            const rating = (Math.random() * 2 + 3).toFixed(1); // Random rating between 3.0 and 5.0
+            
+            // Determine badge (if any)
+            let badgeHTML = '';
+            if (isSpecial) {
+                badgeHTML = '<span class="item-badge badge-special">Chef\'s Special</span>';
+            } else if (isPopular) {
+                badgeHTML = '<span class="item-badge badge-popular">Popular</span>';
+            } else if (isNew) {
+                badgeHTML = '<span class="item-badge badge-new">New</span>';
+            }
+            
+            card.innerHTML = `
+                ${badgeHTML}
+                <img src="${image}" alt="${name}" onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'">
+                <div class="text">
+                    <h3>${name}</h3>
+                    
+                    <div class="item-info">
+                        <div class="item-ratings">
+                            <i class="fas fa-star"></i> ${rating}
+                        </div>
+                        <span class="item-category">${category}</span>
+                    </div>
+                    
+                    <p>${description}</p>
+                    <h5>₹${price.toFixed(2)} | Pieces: ${pieces}</h5>
+                    <div class="Qty">
+                        <h4>Qty:</h4>
+                        <div class="minus">
+                            <i class="fas fa-minus"></i>
+                        </div>
+                        <div class="Qty-in">
+                            <input type="text" class="qty-input" value="1" readonly>
+                        </div>
+                        <div class="plus">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                    </div>
+                    <button class="add-to-cart-btn">
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>
+    </div>
+            `;
+            
+            // Add event listeners
+            const minusBtn = card.querySelector('.minus i');
+            const plusBtn = card.querySelector('.plus i');
+            const qtyInput = card.querySelector('.qty-input');
+            const addToCartBtn = card.querySelector('.add-to-cart-btn');
+            
+            minusBtn.addEventListener('click', () => {
+                let qty = parseInt(qtyInput.value) || 1;
+                qty = Math.max(1, qty - 1);
+                qtyInput.value = qty;
+            });
+            
+            plusBtn.addEventListener('click', () => {
+                let qty = parseInt(qtyInput.value) || 1;
+                qty += 1;
+                qtyInput.value = qty;
+            });
+            
+            addToCartBtn.addEventListener('click', () => {
+                const quantity = parseInt(qtyInput.value) || 1;
+                addItemToCart(id, name, price, quantity, image);
+            });
+            
+            return card;
+        }
+        
+        // Cart functionality
+        let cart = [];
+        
+        function addItemToCart(id, name, price, quantity, image) {
+            // Check if user is authenticated
+            if (!auth.currentUser) {
+                showLoginModal();
+                return;
+            }
+            
+            // Check if item already exists in cart
+            const existingItemIndex = cart.findIndex(item => item.id === id);
+            
+            if (existingItemIndex >= 0) {
+                // Update quantity if item exists
+                cart[existingItemIndex].quantity += quantity;
+            } else {
+                // Add new item to cart
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: quantity,
+                    image: image
+                });
+            }
+            
+            // Save cart to Firebase
+            saveCartToFirebase();
+            
+            // Update UI with animations
+            updateCartCount(true);
+            
+            // Create flying item effect
+            const button = event.currentTarget;
+            const buttonRect = button.getBoundingClientRect();
+            const cartButton = document.querySelector('.img-cart');
+            
+            // Create flying icon
+            const flyingIcon = document.createElement('div');
+            flyingIcon.className = 'item-added-icon';
+            flyingIcon.innerHTML = '<i class="fas fa-check"></i>';
+            flyingIcon.style.left = `${buttonRect.left + buttonRect.width/2 - 20}px`;
+            flyingIcon.style.top = `${buttonRect.top + buttonRect.height/2 - 20}px`;
+            document.body.appendChild(flyingIcon);
+            
+            // Animate cart button
+            cartButton.classList.add('cart-bump');
+            setTimeout(() => {
+                cartButton.classList.remove('cart-bump');
+                // Remove flying icon after animation completes
+                if (document.body.contains(flyingIcon)) {
+                    document.body.removeChild(flyingIcon);
+                }
+            }, 500);
+            
+            // Show success notification
+            showSuccess(`${name} added to cart!`);
+        }
+        
+        function saveCartToFirebase() {
+            if (!auth.currentUser) return;
+            
+            db.collection('carts').doc(auth.currentUser.uid).set({
+                items: cart,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                console.log('Cart saved successfully');
+            })
+            .catch(error => {
+                console.error('Error saving cart:', error);
+            });
+        }
+        
+        function loadCartFromFirebase() {
+            if (!auth.currentUser) {
+                cart = [];
+                updateCartCount();
+                return;
+            }
+            
+            db.collection('carts').doc(auth.currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        cart = doc.data().items || [];
+                    } else {
+                        cart = [];
+                    }
+                    updateCartCount();
+                })
+                .catch(error => {
+                    console.error('Error loading cart:', error);
+                    cart = [];
+                    updateCartCount();
+                });
+        }
+        
+        function updateCartCount(animate = false) {
+            // Update cart count display
+            const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+            
+            // Create cart counter if it doesn't exist
+            let cartCounter = document.querySelector('.cart-counter');
+            if (!cartCounter) {
+                cartCounter = document.createElement('span');
+                cartCounter.className = 'cart-counter';
+                document.querySelector('.img-cart a').appendChild(cartCounter);
+            }
+            
+            // Update count or hide if empty
+            if (cartCount > 0) {
+                cartCounter.textContent = cartCount;
+                cartCounter.style.display = 'flex';
+                
+                // Apply pulse animation if requested
+                if (animate) {
+                    cartCounter.classList.add('counter-pulse');
+                    setTimeout(() => {
+                        cartCounter.classList.remove('counter-pulse');
+                    }, 300);
+                }
+            } else {
+                cartCounter.style.display = 'none';
+            }
+        }
+        
+        // Enhanced notifications with animations
+        function showSuccess(message) {
+            // Remove any existing notifications
+            removeExistingNotifications();
+            
+            const notification = document.createElement('div');
+            notification.className = 'success';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Set timeout to remove with fade out animation
+            setTimeout(() => {
+                notification.style.animation = 'fadeOutRight 0.5s forwards';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        function showError(message) {
+            // Remove any existing notifications
+            removeExistingNotifications();
+            
+            const notification = document.createElement('div');
+            notification.className = 'error';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Set timeout to remove with fade out animation
+            setTimeout(() => {
+                notification.style.animation = 'fadeOutRight 0.5s forwards';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+        
+        function removeExistingNotifications() {
+            const existingNotifications = document.querySelectorAll('.success, .error');
+            existingNotifications.forEach(notification => {
+                notification.style.animation = 'fadeOutRight 0.3s forwards';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            });
+        }
+        
+        function showLoginModal() {
+            modal.style.display = "none"; // Reset first
+            modal.classList.add('show');
+            showLoginForm();
+        }
+        
+        // Auth state handler
+        auth.onAuthStateChanged(user => {
+            updateAuthUI(user);
+            loadCartFromFirebase();
+        });
+
+        // Search Functionality with Keyboard Shortcut
+        document.addEventListener('keydown', function(e) {
+            // Check for Command+K (Mac) or Ctrl+K (Windows)
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('search-input').focus();
+            }
+        });
+
+        // Enhanced search with debounce for better performance
+        const searchInput = document.getElementById('search-input');
+        let searchTimeout = null;
+
+        searchInput.addEventListener('input', function(e) {
+            // Clear any pending timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Add small delay to prevent excessive searching while typing
+            searchTimeout = setTimeout(() => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const menuItems = document.querySelectorAll('.item');
+                let matchCount = 0;
+                
+                menuItems.forEach(item => {
+                    const itemName = item.querySelector('h3').textContent.toLowerCase();
+                    const itemDescription = item.querySelector('p').textContent.toLowerCase();
+                    const category = item.dataset.category || '';
+                    
+                    if (itemName.includes(searchTerm) || 
+                        itemDescription.includes(searchTerm) || 
+                        category.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                        matchCount++;
+                        
+                        // Add highlight effect for matching items
+                        item.classList.add('search-highlight');
+                        setTimeout(() => {
+                            item.classList.remove('search-highlight');
+                        }, 800);
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Update UI based on search results
+                const menuContainer = document.getElementById('menuItems');
+                
+                // Clear any previous no-results message
+                const existingMessage = menuContainer.querySelector('.no-results-message');
+                if (existingMessage) {
+                    existingMessage.remove();
+                }
+                
+                // Show message when no results found
+                if (matchCount === 0 && searchTerm.length > 0) {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'no-results-message';
+                    noResults.innerHTML = `
+                        <i class="fas fa-search"></i>
+                        <h3>No dishes found</h3>
+                        <p>We couldn't find any dishes matching "${searchTerm}"</p>
+                        <button onclick="clearSearch()">Clear Search</button>
+                    `;
+                    menuContainer.appendChild(noResults);
+                }
+            }, 300); // 300ms delay for debounce
+        });
+        
+        // Click handler for search icon
+        document.querySelector('.search-icon').addEventListener('click', function() {
+            document.getElementById('search-input').focus();
+        });
+        
+        // Function to clear search
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = '';
+            searchInput.focus();
+            
+            // Trigger input event to refresh results
+            searchInput.dispatchEvent(new Event('input'));
+        }
+
+        // Initialize button ripple effects
+        document.addEventListener('DOMContentLoaded', function() {
+            initButtonRippleEffects();
+        });
+        
+        function initButtonRippleEffects() {
+            const buttons = document.querySelectorAll('.item button, .hero-button, .checkout-btn, .footer button, .auth-form button');
+            
+            buttons.forEach(button => {
+                button.addEventListener('mousedown', function(e) {
+                    const rect = button.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    button.style.setProperty('--x', x + 'px');
+                    button.style.setProperty('--y', y + 'px');
+                });
+            });
+            
+            // Apply ripple effects to dynamically added buttons
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                const newButtons = node.querySelectorAll('.item button, .hero-button, .checkout-btn, .footer button, .auth-form button');
+                                if (newButtons.length) {
+                                    newButtons.forEach(button => {
+                                        button.addEventListener('mousedown', function(e) {
+                                            const rect = button.getBoundingClientRect();
+                                            const x = e.clientX - rect.left;
+                                            const y = e.clientY - rect.top;
+                                            
+                                            button.style.setProperty('--x', x + 'px');
+                                            button.style.setProperty('--y', y + 'px');
+                                        });
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+            
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    </script>
+
+    <!-- Load Order.js after Firebase initialization -->
+    <script src="Order.js"></script>
+</body>
+</html>

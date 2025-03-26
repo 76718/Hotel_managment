@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - Orders</title>
+    <link rel="stylesheet" href="Owner.css">
+    <link rel="stylesheet" href="styles/owner.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="Owner.html#menu">Menu</a></li>
+            <li><a href="OwnerOrders.html" class="active">Orders</a></li>
+            <li><a href="OwnerBookings.html">Bookings</a></li>
+            <li><a href="OwnerInventory.html">Inventory</a></li>
+            <li><a href="OwnerAnalytics.html">Analytics</a></li>
+            <li><a href="#" id="logoutBtn">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="orders-container">
+        <div class="section-heading">
+            <h2>Orders Management</h2>
+            <div class="filter-container">
+                <select id="orderStatus" class="filter-select">
+                    <option value="all">All Orders</option>
+                    <option value="pending">Pending</option>
+                    <option value="preparing">Preparing</option>
+                    <option value="ready">Ready</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="orderSearch" placeholder="Search orders...">
+            <i class="fas fa-search"></i>
+        </div>
+        
+        <!-- Debug Controls -->
+        <div class="debug-controls">
+            <button id="createTestOrderBtn" class="btn btn-secondary">Create Test Order</button>
+            <button id="refreshOrdersBtn" class="btn btn-primary">Refresh Orders</button>
+        </div>
+        
+        <div id="ordersList">
+            <!-- Orders will be loaded here -->
+            <div class="loading">Loading orders...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlYso3uIhbyU711F_1Wt9eJzBtcPOUlKY",
+            authDomain: "hotel-managment-48744.firebaseapp.com",
+            projectId: "hotel-managment-48744",
+            storageBucket: "hotel-managment-48744.firebasestorage.app",
+            messagingSenderId: "91221905283",
+            appId: "1:91221905283:web:cc9a643990db68ebd0b0b6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // Check authentication state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in, check if they're an owner
+                    db.collection('users').doc(user.uid).get()
+                        .then(doc => {
+                            if (doc.exists && doc.data().role === 'owner') {
+                                // User is an owner, load data
+                                loadOrders();
+                                setupEventListeners();
+                            } else {
+                                // Not an owner, redirect to login
+                                redirectToLogin();
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error checking user role:", error);
+                            showError("Error verifying permissions: " + error.message);
+                            redirectToLogin();
+                        });
+                } else {
+                    // No user is signed in, redirect to login
+                    redirectToLogin();
+                }
+            });
+        });
+
+        function redirectToLogin() {
+            window.location.href = "Owner.html";
+        }
+        
+        function setupEventListeners() {
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                auth.signOut()
+                    .then(() => {
+                        window.location.href = "Owner.html";
+                    })
+                    .catch(error => {
+                        showError('Logout failed: ' + error.message);
+                    });
+            });
+            
+            // Filter orders by status
+            document.getElementById('orderStatus').addEventListener('change', function() {
+                filterOrdersByStatus(this.value);
+            });
+            
+            // Search functionality
+            document.getElementById('orderSearch').addEventListener('input', function() {
+                searchOrders(this.value);
+            });
+            
+            // Debug buttons
+            document.getElementById('createTestOrderBtn').addEventListener('click', createTestOrder);
+            document.getElementById('refreshOrdersBtn').addEventListener('click', loadOrders);
+        }
+        
+        function loadOrders() {
+            const ordersContainer = document.getElementById('ordersList');
+            
+            // Show loading indicator
+            ordersContainer.innerHTML = '<div class="loading">Loading orders...</div>';
+            
+            // Get orders from Firebase
+            db.collection('orders').orderBy('createdAt', 'desc').get()
+                .then(snapshot => {
+                    ordersContainer.innerHTML = '';
+                    if (snapshot.empty) {
+                        ordersContainer.innerHTML = '<p class="no-orders-message">No orders found</p>';
+                        return;
+                    }
+                    
+                    snapshot.forEach(doc => {
+                        const order = doc.data();
+                        const orderElement = createOrderElement(doc.id, order);
+                        ordersContainer.appendChild(orderElement);
+                    });
+                    
+                    // Apply current filter
+                    const currentFilter = document.getElementById('orderStatus').value;
+                    if (currentFilter !== 'all') {
+                        filterOrdersByStatus(currentFilter);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading orders:', error);
+                    ordersContainer.innerHTML = '<div class="error">Failed to load orders. ' + error.message + '</div>';
+                });
+        }
+        
+        function createOrderElement(id, order) {
+            const listItem = document.createElement('div');
+            listItem.className = 'list-item';
+            listItem.dataset.id = id;
+            
+            // Calculate total price
+            const totalPrice = order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+            
+            // Format date
+            const orderDate = order.createdAt ? new Date(order.createdAt.toDate()).toLocaleString() : 'Unknown date';
+            
+            // Status pill class
+            const statusClass = `status-${order.status || 'pending'}`;
+            
+            listItem.innerHTML = `
+                <div class="list-item-header">
+                    <div class="list-item-id">Order #${id.slice(-6)}</div>
+                    <div class="list-item-date">${orderDate}</div>
+                    <div class="status-pill ${statusClass}">${order.status || 'pending'}</div>
+                </div>
+                <div class="list-item-content">
+                    <div class="customer-info">
+                        <p><strong>Customer:</strong> ${order.customerName || 'Anonymous'}</p>
+                        <p><strong>Contact:</strong> ${order.customerEmail || 'N/A'}</p>
+                    </div>
+                    <div class="order-items">
+                        <h4>Items:</h4>
+                        <ul>
+                            ${order.items.map(item => `
+                                <li>${item.name} × ${item.quantity} - ₹${(item.price * item.quantity).toFixed(2)}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="list-item-footer">
+                    <div class="order-total">Total: ₹${totalPrice.toFixed(2)}</div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-primary update-status" onclick="showUpdateStatusOptions(this)">Update Status</button>
+                        <div class="status-options" style="display: none;">
+                            <button class="btn btn-secondary status-option" data-status="pending" data-id="${id}">Pending</button>
+                            <button class="btn btn-secondary status-option" data-status="preparing" data-id="${id}">Preparing</button>
+                            <button class="btn btn-secondary status-option" data-status="ready" data-id="${id}">Ready</button>
+                            <button class="btn btn-secondary status-option" data-status="delivered" data-id="${id}">Delivered</button>
+                            <button class="btn btn-secondary status-option" data-status="completed" data-id="${id}">Completed</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners for status buttons
+            listItem.querySelectorAll('.status-option').forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderId = this.dataset.id;
+                    const newStatus = this.dataset.status;
+                    updateOrderStatus(orderId, newStatus);
+                });
+            });
+            
+            return listItem;
+        }
+        
+        function showUpdateStatusOptions(button) {
+            const statusOptions = button.nextElementSibling;
+            if (statusOptions.style.display === 'none') {
+                statusOptions.style.display = 'flex';
+                button.textContent = 'Cancel';
+            } else {
+                statusOptions.style.display = 'none';
+                button.textContent = 'Update Status';
+            }
+        }
+        
+        function updateOrderStatus(orderId, newStatus) {
+            db.collection('orders').doc(orderId).update({
+                status: newStatus
+            })
+            .then(() => {
+                showSuccess(`Order status updated to ${newStatus}`);
+                // Update the UI without reloading
+                const orderElement = document.querySelector(`.list-item[data-id="${orderId}"]`);
+                if (orderElement) {
+                    const statusPill = orderElement.querySelector('.status-pill');
+                    if (statusPill) {
+                        statusPill.className = `status-pill status-${newStatus}`;
+                        statusPill.textContent = newStatus;
+                    }
+                    // Hide status options
+                    const statusOptions = orderElement.querySelector('.status-options');
+                    const updateButton = orderElement.querySelector('.update-status');
+                    if (statusOptions && updateButton) {
+                        statusOptions.style.display = 'none';
+                        updateButton.textContent = 'Update Status';
+                    }
+                }
+                // Re-apply current filter
+                const currentFilter = document.getElementById('orderStatus').value;
+                filterOrdersByStatus(currentFilter);
+            })
+            .catch(error => {
+                showError('Error updating order status: ' + error.message);
+            });
+        }
+        
+        function filterOrdersByStatus(status) {
+            const orderItems = document.querySelectorAll('.list-item');
+            
+            orderItems.forEach(item => {
+                const statusPill = item.querySelector('.status-pill');
+                if (!statusPill) return;
+                
+                const orderStatus = statusPill.textContent.toLowerCase();
+                
+                if (status === 'all' || orderStatus === status) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Show message if no orders match the filter
+            const visibleOrders = document.querySelectorAll('.list-item[style="display: block"]');
+            const ordersContainer = document.getElementById('ordersList');
+            
+            if (visibleOrders.length === 0 && orderItems.length > 0) {
+                const existingMessage = document.querySelector('.no-orders-message');
+                if (!existingMessage) {
+                    const message = document.createElement('p');
+                    message.className = 'no-orders-message';
+                    message.textContent = 'No ' + status + ' orders found';
+                    ordersContainer.appendChild(message);
+                }
+            } else {
+                const message = document.querySelector('.no-orders-message');
+                if (message) message.remove();
+            }
+        }
+        
+        function searchOrders(query) {
+            query = query.toLowerCase().trim();
+            const orderItems = document.querySelectorAll('.list-item');
+            let foundAny = false;
+            
+            orderItems.forEach(item => {
+                const orderContent = item.textContent.toLowerCase();
+                if (orderContent.includes(query)) {
+                    item.style.display = 'block';
+                    foundAny = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Show message if no orders match the search
+            const ordersContainer = document.getElementById('ordersList');
+            const existingMessage = document.querySelector('.no-orders-message');
+            
+            if (!foundAny && orderItems.length > 0) {
+                if (!existingMessage) {
+                    const message = document.createElement('p');
+                    message.className = 'no-orders-message';
+                    message.textContent = `No orders matching "${query}" found`;
+                    ordersContainer.appendChild(message);
+                } else {
+                    existingMessage.textContent = `No orders matching "${query}" found`;
+                }
+            } else if (existingMessage) {
+                existingMessage.remove();
+            }
+        }
+        
+        function createTestOrder() {
+            // Create a test order in Firestore
+            const statuses = ['pending', 'preparing', 'ready', 'delivered', 'completed'];
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            
+            const testOrder = {
+                customerName: 'Test Customer',
+                customerEmail: 'test@example.com',
+                status: randomStatus,
+                items: [
+                    { id: 'test1', name: 'Test Item 1', price: 100, quantity: 2, image: 'https://via.placeholder.com/100' },
+                    { id: 'test2', name: 'Test Item 2', price: 150, quantity: 1, image: 'https://via.placeholder.com/100' }
+                ],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            db.collection('orders').add(testOrder)
+                .then(docRef => {
+                    showSuccess('Test order created with ID: ' + docRef.id + ' (Status: ' + randomStatus + ')');
+                    loadOrders();
+                })
+                .catch(error => {
+                    showError('Error creating test order: ' + error.message);
+                });
+        }
+        
+        // Utility functions for notifications
+        function showSuccess(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification success';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function showError(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification error';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management System - Owner Dashboard</title>
+    <link rel="stylesheet" href="Owner.css">
+    <link rel="stylesheet" href="styles/owner.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-container">
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-form">
+                    <h2>Login</h2>
+                    <form id="loginFormElement">
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p class="auth-switch">Don't have an account? <a href="#" onclick="toggleAuth('signup')">Sign up</a></p>
+                </div>
+
+                <!-- Signup Form -->
+                <div id="signupForm" class="auth-form" style="display: none;">
+                    <h2>Sign Up</h2>
+                    <form id="signupFormElement">
+                        <div class="form-group">
+                            <label for="signupEmail">Email</label>
+                            <input type="email" id="signupEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password</label>
+                            <input type="password" id="signupPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <input type="password" id="confirmPassword" required>
+                        </div>
+                        <button type="submit">Sign Up</button>
+                    </form>
+                    <p class="auth-switch">Already have an account? <a href="#" onclick="toggleAuth('login')">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (Initially Hidden) -->
+    <div id="dashboard" style="display: none;">
+        <header>
+            <h1>Owner Dashboard</h1>
+            <nav>
+                <ul>
+                    <li><a href="#menu" class="active">Menu</a></li>
+                    <li><a href="OwnerOrders.html">Orders</a></li>
+                    <li><a href="OwnerBookings.html">Bookings</a></li>
+                    <li><a href="#inventory">Inventory</a></li>
+                    <li><a href="#analytics">Analytics</a></li>
+                    <li><a href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Menu Section -->
+            <section id="menu" class="dashboard-section">
+                <h2>Menu Management</h2>
+                <div class="section-controls">
+                    <button id="addItemBtn" class="btn-primary">Add New Item</button>
+                    <div class="search-box">
+                        <input type="text" id="menuSearch" placeholder="Search menu items...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <div id="menuItems" class="grid-container">
+                    <!-- Menu items will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section id="orders" class="dashboard-section">
+                <h2>Orders</h2>
+                <div class="section-controls">
+                    <select id="orderStatus">
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="preparing">Preparing</option>
+                        <option value="ready">Ready</option>
+                        <option value="delivered">Delivered</option>
+                    </select>
+                    <div class="search-box">
+                        <input type="text" id="orderSearch" placeholder="Search orders...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <!-- Debug Controls -->
+                <div class="debug-controls" style="margin-bottom: 15px;">
+                    <button id="createTestOrderBtn" onclick="window.createTestOrder && window.createTestOrder()" class="btn-primary">Create Test Order</button>
+                    <button id="debugOrdersBtn" onclick="window.inspectOrderIDs && window.inspectOrderIDs()" class="btn-primary">Debug Orders</button>
+                    <button id="forceShowOrdersBtn" onclick="window.showOrdersDirectly && window.showOrdersDirectly()" class="btn-primary">Force Show Orders</button>
+                </div>
+                <div id="ordersList" class="list-container">
+                    <!-- Orders will be loaded here -->
+                    <div class="loading">Loading orders...</div>
+                </div>
+            </section>
+
+            <!-- Inventory Section -->
+            <section id="inventory" class="dashboard-section">
+                <h2>Inventory Management</h2>
+                <div class="section-controls">
+                    <button id="addInventoryBtn" class="btn-primary">Add New Item</button>
+                    <div class="search-box">
+                        <input type="text" id="inventorySearch" placeholder="Search inventory...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <div id="inventoryList" class="grid-container">
+                    <!-- Inventory items will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="dashboard-section">
+                <h2>Analytics</h2>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Today's Revenue</h3>
+                        <p id="todayRevenue">₹0</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Today's Orders</h3>
+                        <p id="todayOrders">0</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Popular Items</h3>
+                        <ul id="popularItems"></ul>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Low Stock Items</h3>
+                        <ul id="lowStockItems"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Menu Item</h2>
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label for="itemName">Item Name</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemDescription">Description</label>
+                    <textarea id="itemDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="itemPrice">Price</label>
+                    <input type="number" id="itemPrice" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemCategory">Category</label>
+                    <select id="itemCategory" required>
+                        <option value="starters">Starters</option>
+                        <option value="main">Main Course</option>
+                        <option value="desserts">Desserts</option>
+                        <option value="beverages">Beverages</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="itemImage">Image URL</label>
+                    <input type="url" id="itemImage" required>
+                </div>
+                <button type="submit" class="btn-primary">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Inventory Modal -->
+    <div id="addInventoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Inventory Item</h2>
+            <form id="addInventoryForm">
+                <div class="form-group">
+                    <label for="inventoryName">Item Name</label>
+                    <input type="text" id="inventoryName" required>
+                </div>
+                <div class="form-group">
+                    <label for="inventoryQuantity">Quantity</label>
+                    <input type="number" id="inventoryQuantity" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="inventoryUnit">Unit</label>
+                    <select id="inventoryUnit" required>
+                        <option value="kg">Kilograms</option>
+                        <option value="g">Grams</option>
+                        <option value="l">Liters</option>
+                        <option value="ml">Milliliters</option>
+                        <option value="pcs">Pieces</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inventoryThreshold">Low Stock Threshold</label>
+                    <input type="number" id="inventoryThreshold" min="0" required>
+                </div>
+                <button type="submit" class="btn-primary">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlYso3uIhbyU711F_1Wt9eJzBtcPOUlKY",
+            authDomain: "hotel-managment-48744.firebaseapp.com",
+            projectId: "hotel-managment-48744",
+            storageBucket: "hotel-managment-48744.firebasestorage.app",
+            messagingSenderId: "91221905283",
+            appId: "1:91221905283:web:cc9a643990db68ebd0b0b6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+    </script>
+
+    <!-- Owner.js -->
+    <script src="js/auth.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="Owner.js"></script>
+</body>
+</html> 
