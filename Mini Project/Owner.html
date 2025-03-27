@@ -7,12 +7,127 @@
     <link rel="stylesheet" href="Owner.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Dashboard Section Visibility */
+        .dashboard-section {
+            display: none;
+        }
+        #menu {
+            display: block;
+        }
+
+        /* Menu Item Card Styling */
+        .menu-item-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+        }
+        .menu-item-actions {
+            margin-top: 10px;
+        }
+
+        /* Button Styles */
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        /* Navigation Active State */
+        nav ul li a.active {
+            color: #3a86ff;
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        .modal-header {
+            margin-bottom: 15px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .modal-body {
+            padding: 0;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        .modal-footer {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        /* Sign-Up Link Styling */
+        .signup-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .signup-link a {
+            color: #3a86ff;
+            text-decoration: none;
+        }
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <!-- Login Modal -->
     <div class="modal" id="loginModal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span class="close" onclick="closeModal('loginModal')">×</span>
             <div class="login-container">
                 <div class="login-header">
                     <h2>Owner Dashboard</h2>
@@ -28,7 +143,7 @@
                         <label for="password">Password</label>
                         <input type="password" id="password" placeholder="Enter your password">
                         <i class="fa fa-lock"></i>
-                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <button type="button" class="toggle-password" onclick="togglePassword('password')">
                             <i class="fa fa-eye"></i>
                         </button>
                     </div>
@@ -41,14 +156,64 @@
                     </div>
                     <button class="login-btn" onclick="handleLogin()">
                         <span class="btn-text">Log In</span>
-                        <span class="btn-loader">
-                            <i class="fa fa-spinner fa-spin"></i>
-                        </span>
+                        <span class="btn-loader"><i class="fa fa-spinner fa-spin"></i></span>
                         <span class="btn-icon"><i class="fa fa-arrow-right"></i></span>
                     </button>
                     <div class="security-note">
                         <i class="fa fa-shield"></i>
                         <span>Your login is secure. We use encryption to protect your data.</span>
+                    </div>
+                    <div class="signup-link">
+                        <p>Don't have an account? <a href="#" onclick="showSignUpModal()">Sign Up</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign-Up Modal -->
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('signupModal')">×</span>
+            <div class="login-container">
+                <div class="login-header">
+                    <h2>Sign Up</h2>
+                    <p>Create an account to manage your restaurant</p>
+                </div>
+                <div class="form">
+                    <div class="form-group">
+                        <label for="signupName">Full Name</label>
+                        <input type="text" id="signupName" placeholder="Enter your full name" required>
+                        <i class="fa fa-user"></i>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupRestaurant">Restaurant Name</label>
+                        <input type="text" id="signupRestaurant" placeholder="Enter your restaurant name" required>
+                        <i class="fa fa-store"></i>
+                    </div>
+                    <div class="form-group email-input">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" placeholder="Enter your email address" required>
+                        <i class="fa fa-envelope"></i>
+                    </div>
+                    <div class="form-group password-input">
+                        <label for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" placeholder="Create a password" required>
+                        <i class="fa fa-lock"></i>
+                        <button type="button" class="toggle-password" onclick="togglePassword('signupPassword')">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                    </div>
+                    <button class="login-btn" onclick="handleSignUp()">
+                        <span class="btn-text">Sign Up</span>
+                        <span class="btn-icon"><i class="fa fa-arrow-right"></i></span>
+                    </button>
+                    <div class="security-note">
+                        <i class="fa fa-shield"></i>
+                        <span>Your data is secure. We use encryption to protect your information.</span>
+                    </div>
+                    <div class="signup-link">
+                        <p>Already have an account? <a href="#" onclick="showLoginModal()">Log In</a></p>
                     </div>
                 </div>
             </div>
@@ -63,7 +228,7 @@
                 <li><a href="OwnerOrders.html">Orders</a></li>
                 <li><a href="OwnerBookings.html">Bookings</a></li>
                 <li><a href="OwnerInventory.html">Inventory</a></li>
-                <li><a href="OwnerAnalytics.html" id="analyticsLink">Analytics</a></li>
+                <li><a href="OwnerAnalytics.html">Analytics</a></li>
                 <li><a href="#" id="logoutBtn">Logout</a></li>
             </ul>
         </nav>
@@ -75,14 +240,11 @@
                     <h2>Menu Management</h2>
                     <button id="addItemBtn" class="btn btn-primary">Add New Item</button>
                 </div>
-                
                 <div class="search-box">
                     <input type="text" id="menuSearch" placeholder="Search menu items...">
                     <i class="fas fa-search"></i>
                 </div>
-                
                 <div id="menuItems" class="grid-container">
-                    <!-- Menu items will be loaded here -->
                     <div class="loading">Loading menu items...</div>
                 </div>
             </section>
@@ -102,21 +264,16 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="search-box">
                     <input type="text" id="orderSearch" placeholder="Search orders...">
                     <i class="fas fa-search"></i>
                 </div>
-                
-                <!-- Debug Controls -->
                 <div class="debug-controls">
                     <button id="createTestOrderBtn" class="btn btn-secondary">Create Test Order</button>
                     <button id="debugOrdersBtn" class="btn btn-secondary">Debug Orders</button>
                     <button id="forceShowOrdersBtn" class="btn btn-secondary">Force Show Orders</button>
                 </div>
-                
                 <div id="ordersList">
-                    <!-- Orders will be loaded here -->
                     <div class="loading">Loading orders...</div>
                 </div>
             </section>
@@ -127,14 +284,11 @@
                     <h2>Inventory Management</h2>
                     <button id="addInventoryBtn" class="btn btn-primary">Add New Item</button>
                 </div>
-                
                 <div class="search-box">
                     <input type="text" id="inventorySearch" placeholder="Search inventory...">
                     <i class="fas fa-search"></i>
                 </div>
-                
                 <div id="inventoryList" class="grid-container">
-                    <!-- Inventory items will be loaded here -->
                     <div class="loading">Loading inventory items...</div>
                 </div>
             </section>
@@ -144,25 +298,21 @@
                 <div class="section-heading">
                     <h2>Analytics</h2>
                 </div>
-                
                 <div class="grid-container analytics">
                     <div class="analytics-card">
                         <h3>Today's Revenue</h3>
-                        <div class="value" id="todayRevenue">₹0</div>
+                        <div class="value" id="todayRevenue">0</div>
                         <div class="trend up"><i class="fas fa-arrow-up"></i> 15% vs. yesterday</div>
                     </div>
-                    
                     <div class="analytics-card">
                         <h3>Today's Orders</h3>
                         <div class="value" id="todayOrders">0</div>
                         <div class="trend up"><i class="fas fa-arrow-up"></i> 8% vs. yesterday</div>
                     </div>
-                    
                     <div class="analytics-card">
                         <h3>Popular Items</h3>
                         <ul id="popularItems" class="stats-list"></ul>
                     </div>
-                    
                     <div class="analytics-card">
                         <h3>Low Stock Items</h3>
                         <ul id="lowStockItems" class="stats-list"></ul>
@@ -175,7 +325,7 @@
     <!-- Add Item Modal -->
     <div id="addItemModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close">×</span>
             <div class="modal-header">
                 <h2>Add New Menu Item</h2>
             </div>
@@ -192,7 +342,7 @@
                         <div class="validation-message">Please enter a description</div>
                     </div>
                     <div class="form-group price-input">
-                        <label for="itemPrice">Price (₹)</label>
+                        <label for="itemPrice">Price</label>
                         <input type="number" id="itemPrice" min="0" step="0.01" required placeholder="0.00">
                         <div class="validation-message">Please enter a valid price</div>
                     </div>
@@ -224,7 +374,7 @@
     <!-- Add Inventory Modal -->
     <div id="addInventoryModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close">×</span>
             <div class="modal-header">
                 <h2>Add New Inventory Item</h2>
             </div>
@@ -259,9 +409,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
+
     <script>
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAlYso3uIhbyU711F_1Wt9eJzBtcPOUlKY",
             authDomain: "hotel-managment-48744.firebaseapp.com",
@@ -271,30 +420,26 @@
             appId: "1:91221905283:web:cc9a643990db68ebd0b0b6"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        // Show login modal on page load
+
         document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('loginModal');
+            const loginModal = document.getElementById('loginModal');
+            const signupModal = document.getElementById('signupModal');
             const dashboard = document.getElementById('dashboard');
-            
-            // Check if user is already logged in
+
             auth.onAuthStateChanged(function(user) {
                 if (user) {
-                    // User is already signed in, check if they're an owner
                     db.collection('users').doc(user.uid).get()
                         .then(doc => {
                             if (doc.exists && doc.data().role === 'owner') {
-                                // User is an owner, show dashboard
-                                modal.classList.remove('show');
-                                modal.style.display = "none";
+                                loginModal.classList.remove('show');
+                                signupModal.classList.remove('show');
+                                loginModal.style.display = "none";
+                                signupModal.style.display = "none";
                                 dashboard.style.display = 'block';
                                 loadDashboardData();
-                                
-                                // Check for hash fragment to navigate to specific section
                                 if (window.location.hash) {
                                     const sectionId = window.location.hash.substring(1);
                                     if (document.getElementById(sectionId)) {
@@ -302,49 +447,41 @@
                                     }
                                 }
                             } else {
-                                // Not an owner, show login
-                                modal.classList.add('show');
-                                auth.signOut(); // Sign out non-owner users
+                                loginModal.classList.add('show');
+                                auth.signOut();
                             }
                         })
                         .catch(error => {
                             console.error("Error checking user role:", error);
-                            modal.classList.add('show');
+                            loginModal.classList.add('show');
                         });
                 } else {
-                    // No user is signed in, show login
-                    modal.classList.add('show');
+                    loginModal.classList.add('show');
                 }
             });
-            
-            // Restore saved email if remember me was checked
+
             const savedEmail = localStorage.getItem('ownerEmail');
             if (savedEmail) {
                 document.getElementById('email').value = savedEmail;
                 document.getElementById('remember').checked = true;
             }
-            
-            // Login function
+
             window.login = function(email, password) {
                 return new Promise((resolve, reject) => {
-                    // Authenticate and check for owner role
                     auth.signInWithEmailAndPassword(email, password)
                         .then(userCredential => {
-                            // Check if user has owner role
                             return db.collection('users').doc(userCredential.user.uid).get()
                                 .then(doc => {
                                     if (doc.exists && doc.data().role === 'owner') {
-                                        // Hide modal and show dashboard
-                                        modal.classList.remove('show');
+                                        loginModal.classList.remove('show');
                                         setTimeout(() => {
-                                            modal.style.display = "none";
+                                            loginModal.style.display = "none";
                                             document.getElementById('dashboard').style.display = 'block';
                                         }, 300);
                                         showSuccess('Welcome to the Owner Dashboard');
                                         loadDashboardData();
                                         resolve();
                                     } else {
-                                        // Not an owner, sign out
                                         auth.signOut();
                                         reject(new Error('Access denied. Owner privileges required.'));
                                     }
@@ -355,22 +492,20 @@
                         });
                 });
             };
-            
-            // Handle logout
+
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 auth.signOut()
                     .then(() => {
                         document.getElementById('dashboard').style.display = 'none';
-                        modal.classList.add('show');
+                        loginModal.classList.add('show');
                         showSuccess('Logged out successfully');
                     })
                     .catch(error => {
                         showError('Logout failed: ' + error.message);
                     });
             });
-            
-            // Close modals when clicking on close button or outside
+
             document.querySelectorAll('.close, .close-modal').forEach(element => {
                 element.addEventListener('click', function() {
                     document.querySelectorAll('.modal').forEach(modal => {
@@ -378,60 +513,44 @@
                     });
                 });
             });
-            
-            // Initialize menu management
+
             initializeMenuManagement();
-            
-            // Initialize inventory management
             initializeInventoryManagement();
-            
-            // Debug order buttons
+
             document.getElementById('createTestOrderBtn').addEventListener('click', createTestOrder);
             document.getElementById('debugOrdersBtn').addEventListener('click', inspectOrderIDs);
             document.getElementById('forceShowOrdersBtn').addEventListener('click', loadOrders);
-            
-            // Filter orders by status
+
             document.getElementById('orderStatus').addEventListener('change', function() {
                 filterOrdersByStatus(this.value);
             });
         });
-        
-        // Function to load dashboard data
+
         function loadDashboardData() {
             loadMenu();
             loadOrders();
             loadInventory();
             loadAnalytics();
-            
-            // Initialize section display
             showSection('menu');
-            
-            // Set up navigation event listeners
             setupNavigation();
         }
-        
-        // Function to set up navigation event listeners
+
         function setupNavigation() {
-            // Handle dashboard section navigation
-            document.querySelectorAll('nav ul li a[href^="#"]').forEach(link => {
+            document.querySelectorAll('nav ul li a').forEach(link => {
                 link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const sectionId = this.getAttribute('href').substring(1);
-                    showSection(sectionId);
+                    const href = this.getAttribute('href');
+                    if (href.startsWith('#')) {
+                        e.preventDefault();
+                        const sectionId = href.substring(1);
+                        showSection(sectionId);
+                    } else {
+                        e.preventDefault();
+                        window.location.href = href;
+                    }
                 });
             });
-            
-            // Special handling for Analytics link to force direct navigation
-            document.getElementById('analyticsLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log("Analytics link clicked");
-                
-                // Force open in a new tab to avoid any navigation issues
-                window.open("OwnerAnalytics.html", "_blank");
-            });
         }
-        
-        // Utility functions for notifications
+
         function showSuccess(message) {
             const notification = document.createElement('div');
             notification.className = 'notification success';
@@ -442,7 +561,7 @@
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
-        
+
         function showError(message) {
             const notification = document.createElement('div');
             notification.className = 'notification error';
@@ -453,38 +572,32 @@
                 setTimeout(() => notification.remove(), 4000);
             }, 4000);
         }
-        
-        // Mock functions for demo purposes - replace with actual implementations
+
         function initializeMenuManagement() {
             document.getElementById('addItemBtn').addEventListener('click', function() {
                 document.getElementById('addItemModal').classList.add('show');
-            });
-            
-            document.getElementById('addItemForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Add menu item logic here
-                showSuccess('Menu item added successfully');
-                document.getElementById('addItemModal').classList.remove('show');
+                document.getElementById('addItemForm').reset();
+                document.getElementById('addItemModal').querySelector('.modal-header h2').textContent = 'Add New Menu Item';
+                const form = document.getElementById('addItemForm');
+                form.onsubmit = addItemHandler;
             });
         }
-        
+
         function initializeInventoryManagement() {
             document.getElementById('addInventoryBtn').addEventListener('click', function() {
                 document.getElementById('addInventoryModal').classList.add('show');
             });
-            
+
             document.getElementById('addInventoryForm').addEventListener('submit', function(e) {
                 e.preventDefault();
-                // Add inventory item logic here
                 showSuccess('Inventory item added successfully');
                 document.getElementById('addInventoryModal').classList.remove('show');
             });
         }
-        
+
         function loadMenu() {
             const menuContainer = document.getElementById('menuItems');
-            
-            // Dummy data for demo
+
             db.collection('menu').get()
                 .then(snapshot => {
                     menuContainer.innerHTML = '';
@@ -492,11 +605,19 @@
                         menuContainer.innerHTML = '<p>No menu items found</p>';
                         return;
                     }
-                    
+
                     snapshot.forEach(doc => {
                         const item = doc.data();
                         const itemElement = createMenuItemElement(doc.id, item);
                         menuContainer.appendChild(itemElement);
+                    });
+
+                    document.querySelectorAll('.edit-item').forEach(button => {
+                        button.addEventListener('click', handleEditItem);
+                    });
+
+                    document.querySelectorAll('.delete-item').forEach(button => {
+                        button.addEventListener('click', handleDeleteItem);
                     });
                 })
                 .catch(error => {
@@ -504,12 +625,12 @@
                     menuContainer.innerHTML = '<div class="error">Failed to load menu items</div>';
                 });
         }
-        
+
         function createMenuItemElement(id, item) {
             const card = document.createElement('div');
             card.className = 'menu-item-card';
             card.dataset.id = id;
-            
+
             card.innerHTML = `
                 <img src="${item.image || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${item.name}">
                 <div class="menu-item-details">
@@ -522,14 +643,99 @@
                     </div>
                 </div>
             `;
-            
+
             return card;
         }
-        
+
+        function handleEditItem(event) {
+            const itemId = event.target.dataset.id;
+
+            db.collection('menu').doc(itemId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const item = doc.data();
+
+                        document.getElementById('itemName').value = item.name;
+                        document.getElementById('itemDescription').value = item.description;
+                        document.getElementById('itemPrice').value = item.price;
+                        document.getElementById('itemCategory').value = item.category;
+                        document.getElementById('itemImage').value = item.image;
+
+                        const modal = document.getElementById('addItemModal');
+                        modal.classList.add('show');
+                        modal.querySelector('.modal-header h2').textContent = 'Edit Menu Item';
+
+                        const form = document.getElementById('addItemForm');
+                        form.removeEventListener('submit', addItemHandler);
+
+                        form.onsubmit = function(e) {
+                            e.preventDefault();
+                            const updatedItem = {
+                                name: document.getElementById('itemName').value,
+                                description: document.getElementById('itemDescription').value,
+                                price: parseFloat(document.getElementById('itemPrice').value),
+                                category: document.getElementById('itemCategory').value,
+                                image: document.getElementById('itemImage').value,
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            };
+
+                            db.collection('menu').doc(itemId).update(updatedItem)
+                                .then(() => {
+                                    showSuccess('Menu item updated successfully');
+                                    modal.classList.remove('show');
+                                    loadMenu();
+                                })
+                                .catch(error => {
+                                    showError('Error updating item: ' + error.message);
+                                });
+                        };
+                    }
+                })
+                .catch(error => {
+                    showError('Error loading item data: ' + error.message);
+                });
+        }
+
+        function handleDeleteItem(event) {
+            const itemId = event.target.dataset.id;
+
+            if (confirm('Are you sure you want to delete this menu item?')) {
+                db.collection('menu').doc(itemId).delete()
+                    .then(() => {
+                        showSuccess('Menu item deleted successfully');
+                        loadMenu();
+                    })
+                    .catch(error => {
+                        showError('Error deleting item: ' + error.message);
+                    });
+            }
+        }
+
+        const addItemHandler = function(e) {
+            e.preventDefault();
+            const newItem = {
+                name: document.getElementById('itemName').value,
+                description: document.getElementById('itemDescription').value,
+                price: parseFloat(document.getElementById('itemPrice').value),
+                category: document.getElementById('itemCategory').value,
+                image: document.getElementById('itemImage').value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            db.collection('menu').add(newItem)
+                .then(() => {
+                    showSuccess('Menu item added successfully');
+                    document.getElementById('addItemModal').classList.remove('show');
+                    loadMenu();
+                })
+                .catch(error => {
+                    showError('Error adding menu item: ' + error.message);
+                });
+        };
+
         function loadOrders() {
             const ordersContainer = document.getElementById('ordersList');
-            
-            // Dummy data for demo
+
             db.collection('orders').orderBy('createdAt', 'desc').get()
                 .then(snapshot => {
                     ordersContainer.innerHTML = '';
@@ -537,7 +743,7 @@
                         ordersContainer.innerHTML = '<p>No orders found</p>';
                         return;
                     }
-                    
+
                     snapshot.forEach(doc => {
                         const order = doc.data();
                         const orderElement = createOrderElement(doc.id, order);
@@ -549,21 +755,16 @@
                     ordersContainer.innerHTML = '<div class="error">Failed to load orders</div>';
                 });
         }
-        
+
         function createOrderElement(id, order) {
             const listItem = document.createElement('div');
             listItem.className = 'list-item';
             listItem.dataset.id = id;
-            
-            // Calculate total price
+
             const totalPrice = order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-            
-            // Format date
             const orderDate = order.createdAt ? new Date(order.createdAt.toDate()).toLocaleString() : 'Unknown date';
-            
-            // Status pill class
             const statusClass = `status-${order.status || 'pending'}`;
-            
+
             listItem.innerHTML = `
                 <div class="list-item-header">
                     <div class="list-item-id">Order #${id.slice(-6)}</div>
@@ -579,13 +780,13 @@
                         <h4>Items:</h4>
                         <ul>
                             ${order.items.map(item => `
-                                <li>${item.name} × ${item.quantity} - ₹${(item.price * item.quantity).toFixed(2)}</li>
+                                <li>${item.name} × ${item.quantity} - ${(item.price * item.quantity).toFixed(2)}</li>
                             `).join('')}
                         </ul>
                     </div>
                 </div>
                 <div class="list-item-footer">
-                    <div class="order-total">Total: ₹${totalPrice.toFixed(2)}</div>
+                    <div class="order-total">Total: ${totalPrice.toFixed(2)}</div>
                     <div class="list-item-actions">
                         <button class="btn btn-primary update-status" data-id="${id}" onclick="showUpdateStatusOptions(this)">Update Status</button>
                         <div class="status-options" style="display: none;">
@@ -598,8 +799,7 @@
                     </div>
                 </div>
             `;
-            
-            // Add event listeners for status buttons
+
             listItem.querySelectorAll('.status-option').forEach(button => {
                 button.addEventListener('click', function() {
                     const orderId = this.dataset.id;
@@ -607,11 +807,10 @@
                     updateOrderStatus(orderId, newStatus);
                 });
             });
-            
+
             return listItem;
         }
-        
-        // Function to show status update options
+
         function showUpdateStatusOptions(button) {
             const statusOptions = button.nextElementSibling;
             if (statusOptions.style.display === 'none') {
@@ -622,15 +821,13 @@
                 button.textContent = 'Update Status';
             }
         }
-        
-        // Function to update order status
+
         function updateOrderStatus(orderId, newStatus) {
             db.collection('orders').doc(orderId).update({
                 status: newStatus
             })
             .then(() => {
                 showSuccess(`Order status updated to ${newStatus}`);
-                // Update the UI without reloading
                 const orderElement = document.querySelector(`.list-item[data-id="${orderId}"]`);
                 if (orderElement) {
                     const statusPill = orderElement.querySelector('.status-pill');
@@ -638,7 +835,6 @@
                         statusPill.className = `status-pill status-${newStatus}`;
                         statusPill.textContent = newStatus;
                     }
-                    // Hide status options
                     const statusOptions = orderElement.querySelector('.status-options');
                     const updateButton = orderElement.querySelector('.update-status');
                     if (statusOptions && updateButton) {
@@ -646,28 +842,25 @@
                         updateButton.textContent = 'Update Status';
                     }
                 }
-                // Re-apply current filter
-                const currentFilter = document.getElementById('orderStatus').value;
-                filterOrdersByStatus(currentFilter);
+                filterOrdersByStatus(document.getElementById('orderStatus').value);
             })
             .catch(error => {
                 showError('Error updating order status: ' + error.message);
             });
         }
-        
+
         function loadInventory() {
-            // Implement inventory loading logic
+            // Implement inventory loading logic here if needed
         }
-        
+
         function loadAnalytics() {
-            // Implement analytics loading logic
+            // Implement analytics loading logic here if needed
         }
-        
+
         function createTestOrder() {
-            // Create a test order in Firestore
             const statuses = ['pending', 'preparing', 'ready', 'delivered', 'completed'];
             const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            
+
             const testOrder = {
                 customerName: 'Test Customer',
                 customerEmail: 'test@example.com',
@@ -678,7 +871,7 @@
                 ],
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            
+
             db.collection('orders').add(testOrder)
                 .then(docRef => {
                     showSuccess('Test order created with ID: ' + docRef.id + ' (Status: ' + randomStatus + ')');
@@ -688,7 +881,7 @@
                     showError('Error creating test order: ' + error.message);
                 });
         }
-        
+
         function inspectOrderIDs() {
             db.collection('orders').get()
                 .then(snapshot => {
@@ -706,31 +899,25 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.querySelector('.login-btn');
-            
-            // Show loading state
+
             loginBtn.classList.add('loading');
             loginBtn.disabled = true;
-            
-            // Basic validation
+
             if (!email || !password) {
                 showError('Please enter both email and password');
                 loginBtn.classList.remove('loading');
                 loginBtn.disabled = false;
                 return;
             }
-            
-            // Remember me functionality
+
             if (document.getElementById('remember').checked) {
                 localStorage.setItem('ownerEmail', email);
             } else {
                 localStorage.removeItem('ownerEmail');
             }
-            
-            // Call firebase login
+
             login(email, password)
-                .then(() => {
-                    // Success is handled in login function
-                })
+                .then(() => {})
                 .catch(error => {
                     showError(error.message);
                     loginBtn.classList.remove('loading');
@@ -738,15 +925,59 @@
                 });
         }
 
-        function showToast(message) {
-            // Use the showError function for consistency
-            showError(message);
+        function handleSignUp() {
+            const name = document.getElementById('signupName').value;
+            const restaurant = document.getElementById('signupRestaurant').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const signupBtn = document.querySelector('#signupModal .login-btn');
+
+            signupBtn.classList.add('loading');
+            signupBtn.disabled = true;
+
+            if (!name || !restaurant || !email || !password) {
+                showError('Please fill in all fields');
+                signupBtn.classList.remove('loading');
+                signupBtn.disabled = false;
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long');
+                signupBtn.classList.remove('loading');
+                signupBtn.disabled = false;
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    return db.collection('users').doc(user.uid).set({
+                        name: name,
+                        restaurant: restaurant,
+                        email: email,
+                        role: 'owner',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    showSuccess('Sign-up successful! Logging you in...');
+                    document.getElementById('signupModal').classList.remove('show');
+                    signupBtn.classList.remove('loading');
+                    signupBtn.disabled = false;
+                    login(email, password);
+                })
+                .catch(error => {
+                    showError('Sign-up failed: ' + error.message);
+                    signupBtn.classList.remove('loading');
+                    signupBtn.disabled = false;
+                });
         }
 
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.querySelector('.toggle-password i');
-            
+        function togglePassword(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = passwordInput.parentElement.querySelector('.toggle-password i');
+
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 toggleIcon.classList.remove('fa-eye');
@@ -758,35 +989,43 @@
             }
         }
 
-        function closeModal() {
-            const modal = document.getElementById('loginModal');
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
             modal.classList.remove('show');
             setTimeout(() => {
                 modal.style.display = "none";
             }, 300);
         }
 
-        // Function to filter orders by status
+        function showSignUpModal() {
+            document.getElementById('loginModal').classList.remove('show');
+            document.getElementById('signupModal').classList.add('show');
+        }
+
+        function showLoginModal() {
+            document.getElementById('signupModal').classList.remove('show');
+            document.getElementById('loginModal').classList.add('show');
+        }
+
         function filterOrdersByStatus(status) {
             const orderItems = document.querySelectorAll('.list-item');
-            
+
             orderItems.forEach(item => {
                 const statusPill = item.querySelector('.status-pill');
                 if (!statusPill) return;
-                
+
                 const orderStatus = statusPill.textContent.toLowerCase();
-                
+
                 if (status === 'all' || orderStatus === status) {
                     item.style.display = 'block';
                 } else {
                     item.style.display = 'none';
                 }
             });
-            
-            // Show message if no orders match the filter
+
             const visibleOrders = document.querySelectorAll('.list-item[style="display: block"]');
             const ordersContainer = document.getElementById('ordersList');
-            
+
             if (visibleOrders.length === 0 && orderItems.length > 0) {
                 if (!document.querySelector('.no-orders-message')) {
                     const message = document.createElement('p');
@@ -800,37 +1039,19 @@
             }
         }
 
-        // Function to show specific dashboard section
         function showSection(sectionId) {
-            // Hide all sections first
             document.querySelectorAll('.dashboard-section').forEach(section => {
                 section.style.display = 'none';
             });
-            
-            // Show the selected section
+
             document.getElementById(sectionId).style.display = 'block';
-            
-            // Update active nav link
+
             document.querySelectorAll('nav ul li a').forEach(link => {
                 link.classList.remove('active');
             });
-            
-            // Find and activate the correct nav link
+
             document.querySelector(`nav ul li a[href="#${sectionId}"]`).classList.add('active');
         }
-
-        // Add CSS styles for dashboard sections
-        const style = document.createElement('style');
-        style.textContent = `
-            .dashboard-section {
-                display: none;
-            }
-            
-            #menu {
-                display: block; /* Show menu section by default */
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
-</html> 
+</html>

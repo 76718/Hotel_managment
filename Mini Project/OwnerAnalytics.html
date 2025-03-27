@@ -5,19 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Dashboard - Analytics</title>
     <link rel="stylesheet" href="Owner.css">
-    <link rel="stylesheet" href="styles/owner.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .chart-container {
-            height: 300px;
             position: relative;
+            height: 300px; /* Fixed height */
+            width: 100%;   /* Full width */
+            min-height: 300px; /* Ensure minimum height */
         }
         
         .analytics-card {
             padding: 25px;
             margin-bottom: 25px;
+            min-height: 350px; /* Ensure cards have enough space for charts */
+        }
+        
+        canvas {
+            max-height: 100% !important;
+            max-width: 100% !important;
         }
         
         .insights-list {
@@ -39,7 +46,7 @@
         
         .insights-list li i {
             margin-right: 10px;
-            color: var(--primary-color);
+            color: #3a86ff;
         }
         
         .metric-cards {
@@ -51,8 +58,8 @@
         
         .metric-card {
             background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 20px;
             text-align: center;
         }
@@ -61,7 +68,7 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: rgba(var(--primary-color-rgb), 0.1);
+            background: rgba(58, 134, 255, 0.1);
             margin: 0 auto 15px;
             display: flex;
             align-items: center;
@@ -70,7 +77,7 @@
         
         .metric-icon i {
             font-size: 24px;
-            color: var(--primary-color);
+            color: #3a86ff;
         }
         
         .metric-value {
@@ -94,6 +101,11 @@
             .chart-grid {
                 grid-template-columns: 1fr;
             }
+        }
+        
+        nav ul li a.active {
+            color: #3a86ff;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -182,12 +194,8 @@
             
             <div class="card analytics-card">
                 <h3>Business Insights</h3>
-                <ul class="insights-list">
-                    <li><i class="fas fa-lightbulb"></i> Most orders come in between 6PM and 8PM.</li>
-                    <li><i class="fas fa-lightbulb"></i> "Butter Chicken" is your best-selling item.</li>
-                    <li><i class="fas fa-lightbulb"></i> Inventory for "Basmati Rice" is running low.</li>
-                    <li><i class="fas fa-lightbulb"></i> Friday has the highest order volume this month.</li>
-                    <li><i class="fas fa-lightbulb"></i> Average order completion time is 32 minutes.</li>
+                <ul class="insights-list" id="businessInsights">
+                    <!-- Insights will be dynamically added here -->
                 </ul>
             </div>
         </div>
@@ -199,7 +207,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAlYso3uIhbyU711F_1Wt9eJzBtcPOUlKY",
             authDomain: "hotel-managment-48744.firebaseapp.com",
@@ -209,25 +216,20 @@
             appId: "1:91221905283:web:cc9a643990db68ebd0b0b6"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // Check authentication state on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in
+            checkChartContainers();
             auth.onAuthStateChanged(function(user) {
                 if (user) {
-                    // User is signed in, check if they're an owner
                     db.collection('users').doc(user.uid).get()
                         .then(doc => {
                             if (doc.exists && doc.data().role === 'owner') {
-                                // User is an owner, load data
                                 loadAnalytics();
                                 setupEventListeners();
                             } else {
-                                // Not an owner, redirect to login
                                 redirectToLogin();
                             }
                         })
@@ -237,18 +239,15 @@
                             redirectToLogin();
                         });
                 } else {
-                    // No user is signed in, redirect to login
                     redirectToLogin();
                 }
             });
         });
-
         function redirectToLogin() {
             window.location.href = "Owner.html";
         }
         
         function setupEventListeners() {
-            // Handle logout
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 auth.signOut()
@@ -260,242 +259,372 @@
                     });
             });
             
-            // Handle period filter changes
             document.getElementById('periodFilter').addEventListener('change', function() {
                 loadAnalytics(this.value);
             });
             
-            // Ensure menu link works properly
-            document.querySelector('nav ul li a[href="Owner.html#menu"]').addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = "Owner.html#menu";
+            document.querySelectorAll('nav ul li a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (!this.classList.contains('active')) {
+                        e.preventDefault();
+                        window.location.href = this.getAttribute('href');
+                    }
+                });
             });
         }
         
-        function loadAnalytics(period = '7days') {
-            // Sample data for demo purposes
-            const analyticsData = generateAnalyticsData(period);
-            
-            // Update metric cards
-            updateMetricCards(analyticsData);
-            
-            // Create charts
-            createRevenueChart(analyticsData.revenueData);
-            createPopularItemsChart(analyticsData.popularItems);
-            createOrderStatusChart(analyticsData.orderStatusData);
+        async function loadAnalytics(period = '7days') {
+            try {
+                const analyticsData = await fetchAnalyticsData(period);
+                updateMetricCards(analyticsData);
+                createRevenueChart(analyticsData.revenueData);
+                createPopularItemsChart(analyticsData.popularItems);
+                createOrderStatusChart(analyticsData.orderStatusData);
+                updateBusinessInsights(analyticsData.insights);
+            } catch (error) {
+                showError('Error loading analytics data: ' + error.message);
+            }
         }
-        
+
+        async function fetchAnalyticsData(period) {
+            let days;
+            switch (period) {
+                case '30days': days = 30; break;
+                case '90days': days = 90; break;
+                case 'year': days = 365; break;
+                default: days = 7; break;
+            }
+
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
+
+            // Fetch orders within the selected period
+            const ordersSnapshot = await db.collection('orders')
+                .where('createdAt', '>=', startTimestamp)
+                .orderBy('createdAt', 'asc')
+                .get();
+
+            let totalRevenue = 0;
+            let totalOrders = 0;
+            const revenueByDay = {};
+            const itemCounts = {};
+            const statusCounts = {
+                'Pending': 0,
+                'Preparing': 0,
+                'Ready': 0,
+                'Delivered': 0,
+                'Completed': 0
+            };
+
+            // Process orders
+            ordersSnapshot.forEach(doc => {
+                const order = doc.data();
+                const orderDate = order.createdAt.toDate();
+                const dateKey = orderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                // Calculate total revenue
+                const orderTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                totalRevenue += orderTotal;
+                totalOrders++;
+
+                // Revenue trend
+                revenueByDay[dateKey] = (revenueByDay[dateKey] || 0) + orderTotal;
+
+                // Popular items
+                order.items.forEach(item => {
+                    itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
+                });
+
+                // Order status distribution
+                const status = order.status || 'Pending';
+                if (statusCounts.hasOwnProperty(status)) {
+                    statusCounts[status]++;
+                }
+            });
+
+            // Prepare revenue trend data
+            const labels = [];
+            const values = [];
+            const currentDate = new Date(startDate);
+            while (currentDate <= new Date()) {
+                const dateKey = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                labels.push(dateKey);
+                values.push(revenueByDay[dateKey] || 0);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Calculate popular items
+            const popularItems = Object.entries(itemCounts)
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
+
+            // Calculate average order value
+            const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+            // Calculate growth rate (simplified: compare first half vs second half of period)
+            const midPoint = Math.floor(values.length / 2);
+            const firstHalfRevenue = values.slice(0, midPoint).reduce((sum, val) => sum + val, 0);
+            const secondHalfRevenue = values.slice(midPoint).reduce((sum, val) => sum + val, 0);
+            const growthRate = firstHalfRevenue > 0
+                ? Math.round(((secondHalfRevenue - firstHalfRevenue) / firstHalfRevenue) * 100)
+                : 0;
+
+            // Generate business insights
+            const insights = generateBusinessInsights(ordersSnapshot, popularItems);
+
+            return {
+                totalRevenue: Math.round(totalRevenue),
+                totalOrders,
+                averageOrderValue: Math.round(averageOrderValue),
+                growthRate,
+                revenueData: { labels, values },
+                popularItems,
+                orderStatusData: statusCounts,
+                insights
+            };
+        }
+
+        function generateBusinessInsights(ordersSnapshot, popularItems) {
+            const insights = [];
+            let totalCompletionTime = 0;
+            let completedOrders = 0;
+            const ordersByDay = {};
+            const ordersByHour = Array(24).fill(0);
+
+            ordersSnapshot.forEach(doc => {
+                const order = doc.data();
+                const orderDate = order.createdAt.toDate();
+                const dayOfWeek = orderDate.toLocaleString('en-US', { weekday: 'long' });
+                const hour = orderDate.getHours();
+
+                // Orders by day for busiest day
+                ordersByDay[dayOfWeek] = (ordersByDay[dayOfWeek] || 0) + 1;
+
+                // Orders by hour for peak time
+                ordersByHour[hour]++;
+
+                // Average completion time
+                if (order.status === 'completed' && order.createdAt && order.updatedAt) {
+                    const timeDiff = (order.updatedAt.toDate() - order.createdAt.toDate()) / (1000 * 60); // minutes
+                    totalCompletionTime += timeDiff;
+                    completedOrders++;
+                }
+            });
+
+            // Peak ordering time
+            const peakHour = ordersByHour.indexOf(Math.max(...ordersByHour));
+            const peakTime = peakHour >= 12 ? `${peakHour - 12 || 12}PM` : `${peakHour || 12}AM`;
+            insights.push(`<i class="fas fa-lightbulb"></i> Most orders come in around ${peakTime}.`);
+
+            // Best-selling item
+            if (popularItems.length > 0) {
+                insights.push(`<i class="fas fa-lightbulb"></i> "${popularItems[0].name}" is your best-selling item with ${popularItems[0].count} units sold.`);
+            }
+
+            // Busiest day
+            const busiestDay = Object.entries(ordersByDay)
+                .sort(([, a], [, b]) => b - a)[0]?.[0] || 'N/A';
+            insights.push(`<i class="fas fa-lightbulb"></i> ${busiestDay} has the highest order volume.`);
+
+            // Average completion time
+            const avgCompletionTime = completedOrders > 0 ? Math.round(totalCompletionTime / completedOrders) : 0;
+            insights.push(`<i class="fas fa-lightbulb"></i> Average order completion time is ${avgCompletionTime} minutes.`);
+
+            return insights;
+        }
+
         function updateMetricCards(data) {
             document.getElementById('totalRevenue').textContent = `₹${data.totalRevenue.toLocaleString()}`;
             document.getElementById('totalOrders').textContent = data.totalOrders;
             document.getElementById('averageOrderValue').textContent = `₹${data.averageOrderValue.toLocaleString()}`;
             document.getElementById('growthRate').textContent = `${data.growthRate}%`;
         }
-        
+
+        function updateBusinessInsights(insights) {
+            const insightsList = document.getElementById('businessInsights');
+            insightsList.innerHTML = insights.map(insight => `<li>${insight}</li>`).join('');
+        }
+
         function createRevenueChart(data) {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return; // Exit if canvas not found
             
-            // Destroy previous chart if it exists
+            const context = ctx.getContext('2d');
             if (window.revenueChart) {
                 window.revenueChart.destroy();
             }
             
-            window.revenueChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Revenue',
-                        data: data.values,
-                        borderColor: '#3a86ff',
-                        backgroundColor: 'rgba(58, 134, 255, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+            try {
+                window.revenueChart = new Chart(context, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.values,
+                            borderColor: '#3a86ff',
+                            backgroundColor: 'rgba(58, 134, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return '₹' + value;
-                                }
-                            }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: 10
                         },
-                        x: {
-                            grid: {
-                                display: false
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                                ticks: { 
+                                    callback: function(value) { return '₹' + value; },
+                                    padding: 10
+                                }
+                            },
+                            x: { 
+                                grid: { display: false },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    autoSkip: true,
+                                    maxTicksLimit: 10
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error('Error creating revenue chart:', error);
+                showError('Failed to render revenue chart');
+            }
         }
         
         function createPopularItemsChart(data) {
-            const ctx = document.getElementById('itemsChart').getContext('2d');
+            const ctx = document.getElementById('itemsChart');
+            if (!ctx) return;
             
-            // Destroy previous chart if it exists
+            const context = ctx.getContext('2d');
             if (window.itemsChart) {
                 window.itemsChart.destroy();
             }
             
-            window.itemsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(item => item.name),
-                    datasets: [{
-                        label: 'Orders',
-                        data: data.map(item => item.count),
-                        backgroundColor: [
-                            'rgba(58, 134, 255, 0.8)',
-                            'rgba(131, 56, 236, 0.8)',
-                            'rgba(255, 0, 110, 0.8)',
-                            'rgba(56, 176, 0, 0.8)',
-                            'rgba(255, 190, 11, 0.8)'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+            try {
+                window.itemsChart = new Chart(context, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item.name),
+                        datasets: [{
+                            label: 'Units Sold',
+                            data: data.map(item => item.count),
+                            backgroundColor: [
+                                'rgba(58, 134, 255, 0.8)',
+                                'rgba(131, 56, 236, 0.8)',
+                                'rgba(255, 0, 110, 0.8)',
+                                'rgba(56, 176, 0, 0.8)',
+                                'rgba(255, 190, 11, 0.8)'
+                            ],
+                            borderWidth: 0
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: 10
                         },
-                        x: {
-                            grid: {
-                                display: false
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                                ticks: { padding: 10 }
+                            },
+                            x: { 
+                                grid: { display: false },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    autoSkip: true,
+                                    maxTicksLimit: 5
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error('Error creating items chart:', error);
+                showError('Failed to render items chart');
+            }
         }
         
         function createOrderStatusChart(data) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) return;
             
-            // Destroy previous chart if it exists
+            const context = ctx.getContext('2d');
             if (window.statusChart) {
                 window.statusChart.destroy();
             }
             
-            window.statusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{
-                        data: Object.values(data),
-                        backgroundColor: [
-                            'rgba(255, 190, 11, 0.8)',
-                            'rgba(58, 134, 255, 0.8)',
-                            'rgba(56, 176, 0, 0.8)',
-                            'rgba(255, 0, 110, 0.8)',
-                            'rgba(131, 56, 236, 0.8)'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right'
-                        }
+            try {
+                window.statusChart = new Chart(context, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            data: Object.values(data),
+                            backgroundColor: [
+                                'rgba(255, 190, 11, 0.8)',
+                                'rgba(58, 134, 255, 0.8)',
+                                'rgba(56, 176, 0, 0.8)',
+                                'rgba(255, 0, 110, 0.8)',
+                                'rgba(131, 56, 236, 0.8)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: 10
+                        },
+                        plugins: {
+                            legend: { 
+                                position: 'right',
+                                labels: {
+                                    padding: 20
+                                }
+                            }
+                        },
+                        cutout: '50%' // Makes the doughnut thinner/thicker
                     }
+                });
+            } catch (error) {
+                console.error('Error creating status chart:', error);
+                showError('Failed to render status chart');
+            }
+        }
+        
+        function checkChartContainers() {
+            const charts = ['revenueChart', 'itemsChart', 'statusChart'];
+            charts.forEach(chartId => {
+                const element = document.getElementById(chartId);
+                if (!element) {
+                    console.warn(`Chart container ${chartId} not found`);
                 }
             });
         }
         
-        // Function to generate sample analytics data
-        function generateAnalyticsData(period) {
-            // Adjust data based on period filter
-            let days, multiplier;
-            switch(period) {
-                case '30days':
-                    days = 30;
-                    multiplier = 4;
-                    break;
-                case '90days':
-                    days = 90;
-                    multiplier = 12;
-                    break;
-                case 'year':
-                    days = 365;
-                    multiplier = 50;
-                    break;
-                default: // 7days
-                    days = 7;
-                    multiplier = 1;
-                    break;
-            }
-            
-            // Generate revenue data
-            const labels = [];
-            const values = [];
-            const today = new Date();
-            
-            for (let i = days - 1; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(today.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                
-                // Generate a random value between 2000 and 8000
-                values.push(Math.floor(Math.random() * 6000) + 2000);
-            }
-            
-            const totalRevenue = values.reduce((sum, value) => sum + value, 0);
-            const totalOrders = Math.floor(totalRevenue / 350); // Rough estimate
-            
-            return {
-                totalRevenue: totalRevenue * multiplier,
-                totalOrders: totalOrders * multiplier,
-                averageOrderValue: Math.round(totalRevenue / totalOrders),
-                growthRate: Math.floor(Math.random() * 30) + 5, // Random growth between 5% and 35%
-                revenueData: {
-                    labels: labels,
-                    values: values
-                },
-                popularItems: [
-                    { name: 'Butter Chicken', count: 45 * multiplier },
-                    { name: 'Paneer Tikka', count: 38 * multiplier },
-                    { name: 'Biryani', count: 32 * multiplier },
-                    { name: 'Naan', count: 28 * multiplier },
-                    { name: 'Masala Dosa', count: 25 * multiplier }
-                ],
-                orderStatusData: {
-                    'Pending': Math.floor(Math.random() * 20) + 5,
-                    'Preparing': Math.floor(Math.random() * 25) + 10,
-                    'Ready': Math.floor(Math.random() * 15) + 5,
-                    'Delivered': Math.floor(Math.random() * 40) + 20,
-                    'Completed': Math.floor(Math.random() * 30) + 15
-                }
-            };
-        }
-        
-        // Utility functions for notifications
         function showSuccess(message) {
             const notification = document.createElement('div');
             notification.className = 'notification success';
@@ -519,4 +648,4 @@
         }
     </script>
 </body>
-</html> 
+</html>

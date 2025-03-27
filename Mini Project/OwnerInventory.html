@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Dashboard - Inventory</title>
     <link rel="stylesheet" href="Owner.css">
-    <link rel="stylesheet" href="styles/owner.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -175,6 +174,135 @@
             border-radius: 4px;
             margin: 10px 0;
         }
+
+        .inventory-item-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .inventory-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-badge {
+            background: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .inventory-stock {
+            margin: 10px 0;
+        }
+
+        .stock-level.low {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .stock-level.normal {
+            color: #4CAF50;
+        }
+
+        .inventory-price {
+            margin-bottom: 10px;
+        }
+
+        .inventory-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .no-items-message {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        nav ul li a.active {
+            color: #3a86ff;
+            font-weight: 600;
+        }
+        
+        .quantity-display {
+            font-size: 1.1em;
+            margin: 5px 0;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+
+        .auto-update-section {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3a86ff;
+        }
+
+        .auto-update-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
@@ -193,6 +321,18 @@
         <div class="section-heading">
             <h2>Inventory Management</h2>
             <button id="addInventoryBtn" class="btn btn-primary">Add New Item</button>
+        </div>
+        
+        <div class="auto-update-section">
+            <h3>Automatic Inventory Updates</h3>
+            <div class="auto-update-toggle">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoUpdateToggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span>Automatically update inventory when orders are placed</span>
+            </div>
+            <p class="help-text">When enabled, inventory quantities will be automatically deducted when orders are completed.</p>
         </div>
         
         <div class="search-box">
@@ -233,7 +373,7 @@
     <!-- Add Inventory Modal -->
     <div id="addInventoryModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close">×</span>
             <div class="modal-header">
                 <h2>Add New Inventory Item</h2>
             </div>
@@ -277,13 +417,35 @@
         </div>
     </div>
 
+    <!-- Update Stock Modal -->
+    <div id="updateStockModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <div class="modal-header">
+                <h2>Update Stock</h2>
+            </div>
+            <div class="modal-body">
+                <form id="updateStockForm">
+                    <input type="hidden" id="updateItemId">
+                    <div class="form-group">
+                        <label for="updateQuantity">New Quantity</label>
+                        <input type="number" id="updateQuantity" min="0" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAlYso3uIhbyU711F_1Wt9eJzBtcPOUlKY",
             authDomain: "hotel-managment-48744.firebaseapp.com",
@@ -293,25 +455,33 @@
             appId: "1:91221905283:web:cc9a643990db68ebd0b0b6"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // Check authentication state on page load
+        // Store menu items data for ingredient mapping
+        let menuItems = {};
+        // Store inventory items data
+        let inventoryItems = {};
+        // Store auto-update setting
+        let autoUpdateEnabled = true;
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in
+            // Check if we're on the inventory page before loading inventory-specific code
+            if (!window.location.pathname.includes('OwnerInventory.html')) {
+                return;
+            }
+            
             auth.onAuthStateChanged(function(user) {
                 if (user) {
-                    // User is signed in, check if they're an owner
                     db.collection('users').doc(user.uid).get()
                         .then(doc => {
                             if (doc.exists && doc.data().role === 'owner') {
-                                // User is an owner, load data
+                                loadMenuItems();
                                 loadInventory();
                                 setupEventListeners();
+                                setupOrderListener();
                             } else {
-                                // Not an owner, redirect to login
                                 redirectToLogin();
                             }
                         })
@@ -321,7 +491,6 @@
                             redirectToLogin();
                         });
                 } else {
-                    // No user is signed in, redirect to login
                     redirectToLogin();
                 }
             });
@@ -332,7 +501,6 @@
         }
         
         function setupEventListeners() {
-            // Handle logout
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 auth.signOut()
@@ -344,12 +512,10 @@
                     });
             });
             
-            // Add inventory item modal
             document.getElementById('addInventoryBtn').addEventListener('click', function() {
                 document.getElementById('addInventoryModal').classList.add('show');
             });
             
-            // Close modals
             document.querySelectorAll('.close, .close-modal').forEach(element => {
                 element.addEventListener('click', function() {
                     document.querySelectorAll('.modal').forEach(modal => {
@@ -358,7 +524,6 @@
                 });
             });
             
-            // Add inventory form submission
             document.getElementById('addInventoryForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -367,12 +532,11 @@
                     category: document.getElementById('itemCategory').value,
                     quantity: parseInt(document.getElementById('itemQuantity').value),
                     unit: document.getElementById('itemUnit').value,
-                    price: parseFloat(document.getElementById('itemPrice').value),
+                    price: parseFloat(document.getElementById('itemPrice').value) || 0,
                     threshold: parseInt(document.getElementById('itemThreshold').value),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                // Add to Firestore
                 db.collection('inventory').add(newItem)
                     .then(() => {
                         showSuccess('Inventory item added successfully');
@@ -385,22 +549,67 @@
                     });
             });
             
-            // Search functionality
+            document.getElementById('updateStockForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const itemId = document.getElementById('updateItemId').value;
+                const newQuantity = parseInt(document.getElementById('updateQuantity').value);
+                
+                db.collection('inventory').doc(itemId).update({
+                    quantity: newQuantity,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                    .then(() => {
+                        showSuccess('Stock updated successfully');
+                        document.getElementById('updateStockModal').classList.remove('show');
+                        loadInventory();
+                    })
+                    .catch(error => {
+                        showError('Error updating stock: ' + error.message);
+                    });
+            });
+            
             document.getElementById('inventorySearch').addEventListener('input', function() {
                 searchInventory(this.value);
             });
+            
+            // Simplified navigation - removed the prevention that was causing issues
+            document.querySelectorAll('nav ul li a').forEach(link => {
+                link.addEventListener('click', function() {
+                    // Let the links work normally
+                });
+            });
+            
+            // New event listener for auto-update toggle
+            document.getElementById('autoUpdateToggle').addEventListener('change', function() {
+                autoUpdateEnabled = this.checked;
+                showSuccess(`Auto inventory updates ${autoUpdateEnabled ? 'enabled' : 'disabled'}`);
+            });
+        }
+        
+        function loadMenuItems() {
+            db.collection('menu').get()
+                .then(snapshot => {
+                    menuItems = {};
+                    snapshot.forEach(doc => {
+                        menuItems[doc.id] = doc.data();
+                    });
+                    console.log("Menu items loaded:", menuItems);
+                })
+                .catch(error => {
+                    console.error("Error loading menu items:", error);
+                });
         }
         
         function loadInventory() {
             const inventoryContainer = document.getElementById('inventoryList');
             
-            // Show loading indicator
             inventoryContainer.innerHTML = '<div class="loading">Loading inventory items...</div>';
             
-            // Get inventory from Firebase
             db.collection('inventory').orderBy('name').get()
                 .then(snapshot => {
                     inventoryContainer.innerHTML = '';
+                    inventoryItems = {};
                     
                     if (snapshot.empty) {
                         inventoryContainer.innerHTML = '<p class="no-items-message">No inventory items found</p>';
@@ -414,6 +623,7 @@
                     
                     snapshot.forEach(doc => {
                         const item = doc.data();
+                        inventoryItems[doc.id] = item;
                         const itemElement = createInventoryItemElement(doc.id, item);
                         inventoryContainer.appendChild(itemElement);
                         
@@ -429,7 +639,65 @@
                 })
                 .catch(error => {
                     console.error('Error loading inventory:', error);
-                    inventoryContainer.innerHTML = '<div class="error">Failed to load inventory. ' + error.message + '</div>';
+                    inventoryContainer.innerHTML = '<div class="error">Failed to load inventory: ' + error.message + '</div>';
+                });
+        }
+        
+        function setupOrderListener() {
+            db.collection('orders')
+                .where('status', '==', 'completed')
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const order = change.doc.data();
+                            if (autoUpdateEnabled) {
+                                processOrderForInventory(order);
+                            }
+                        }
+                    });
+                }, error => {
+                    console.error("Error listening to orders:", error);
+                });
+        }
+        
+        function processOrderForInventory(order) {
+            if (!order.items || order.items.length === 0) return;
+            
+            const menuItemIds = order.items.map(item => item.menuItemId);
+            
+            db.collection('menu').where(firebase.firestore.FieldPath.documentId(), 'in', menuItemIds).get()
+                .then(snapshot => {
+                    const updates = {};
+                    
+                    order.items.forEach(orderItem => {
+                        const menuItem = snapshot.docs.find(doc => doc.id === orderItem.menuItemId)?.data();
+                        if (menuItem && menuItem.ingredients) {
+                            Object.entries(menuItem.ingredients).forEach(([ingredientId, quantity]) => {
+                                if (!updates[ingredientId]) {
+                                    updates[ingredientId] = 0;
+                                }
+                                updates[ingredientId] += quantity * orderItem.quantity;
+                            });
+                        }
+                    });
+                    
+                    const batch = db.batch();
+                    Object.entries(updates).forEach(([itemId, quantityToDeduct]) => {
+                        const inventoryRef = db.collection('inventory').doc(itemId);
+                        batch.update(inventoryRef, {
+                            quantity: firebase.firestore.FieldValue.increment(-quantityToDeduct),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+                    
+                    return batch.commit();
+                })
+                .then(() => {
+                    console.log("Inventory updated for order:", order.id);
+                    loadInventory();
+                })
+                .catch(error => {
+                    console.error("Error updating inventory for order:", error);
                 });
         }
         
@@ -447,25 +715,44 @@
             }
             card.dataset.id = id;
             
+            const price = typeof item.price === 'number' ? item.price : 0;
+            
             card.innerHTML = `
                 <div class="inventory-item-header">
-                    <h3>${item.name}</h3>
-                    <span class="category-badge">${item.category}</span>
+                    <h3>${item.name || 'Unnamed Item'}</h3>
+                    <span class="category-badge">${item.category || 'Uncategorized'}</span>
                 </div>
                 <div class="inventory-item-details">
-                    <div class="inventory-stock">
-                        <p>Stock: <span class="stock-level ${item.quantity <= item.threshold ? 'low' : 'normal'}">${item.quantity} ${item.unit}</span></p>
-                        <p>Threshold: ${item.threshold} ${item.unit}</p>
+                    <div class="quantity-display">
+                        <strong>Remaining Quantity:</strong> ${item.quantity || 0} ${item.unit || 'units'}
                     </div>
-                    <div class="inventory-price">₹${item.price.toFixed(2)} / ${item.unit}</div>
+                    <div class="inventory-stock">
+                        <p>Stock: <span class="stock-level ${item.quantity <= item.threshold ? 'low' : 'normal'}">${item.quantity || 0} ${item.unit || 'units'}</span></p>
+                        <p>Threshold: ${item.threshold || 0} ${item.unit || 'units'}</p>
+                    </div>
+                    <div class="inventory-price">₹${price.toFixed(2)} / ${item.unit || 'unit'}</div>
                     <div class="inventory-item-actions">
                         <button class="btn btn-secondary edit-item" onclick="editInventoryItem('${id}')">Edit</button>
                         <button class="btn btn-primary update-stock" onclick="openUpdateStockModal('${id}')">Update Stock</button>
+                        <button class="btn btn-danger delete-btn" onclick="deleteInventoryItem('${id}', '${item.name || 'this item'}')">Delete</button>
                     </div>
                 </div>
             `;
             
             return card;
+        }
+        
+        function deleteInventoryItem(id, itemName) {
+            if (confirm(`Are you sure you want to delete ${itemName}? This action cannot be undone.`)) {
+                db.collection('inventory').doc(id).delete()
+                    .then(() => {
+                        showSuccess('Item deleted successfully');
+                        loadInventory();
+                    })
+                    .catch(error => {
+                        showError('Error deleting item: ' + error.message);
+                    });
+            }
         }
         
         function searchInventory(query) {
@@ -483,7 +770,6 @@
                 }
             });
             
-            // Show message if no items match the search
             const inventoryContainer = document.getElementById('inventoryList');
             const existingMessage = document.querySelector('.no-items-message');
             
@@ -503,15 +789,23 @@
         
         function editInventoryItem(id) {
             showSuccess('Edit functionality will be implemented soon');
-            // Implementation for editing inventory items would go here
         }
         
         function openUpdateStockModal(id) {
-            showSuccess('Update stock functionality will be implemented soon');
-            // Implementation for updating stock would go here
+            db.collection('inventory').doc(id).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const item = doc.data();
+                        document.getElementById('updateItemId').value = id;
+                        document.getElementById('updateQuantity').value = item.quantity || 0;
+                        document.getElementById('updateStockModal').classList.add('show');
+                    }
+                })
+                .catch(error => {
+                    showError('Error loading item: ' + error.message);
+                });
         }
         
-        // Utility functions for notifications
         function showSuccess(message) {
             const notification = document.createElement('div');
             notification.className = 'notification success';
@@ -535,4 +829,4 @@
         }
     </script>
 </body>
-</html> 
+</html>

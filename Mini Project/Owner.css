@@ -36,6 +36,22 @@ body {
   margin-bottom: 40px;
 }
 
+.fa-envelope {
+  margin-left: 90%;
+}
+
+.fa-lock {
+  margin-left: 90%;
+}
+
+.fa-user {
+  margin-left: 90%;
+}
+
+.fa-store {
+  margin-left: 90%;
+}
+
 /* Modern Navigation */
 nav {
   display: flex;
@@ -1076,7 +1092,6 @@ nav ul li a.active:after {
 }
 
 .price-input::before {
-  content: "₹";
   position: absolute;
   left: 15px;
   top: 33px;
