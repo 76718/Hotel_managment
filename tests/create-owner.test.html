@@ -1,0 +1,8 @@
+{
+  "testCases": [
+    {
+      "description": "Verify that the form submits successfully with valid data",
+      "test": "describe('Form Submission', () => {\n  it('submits successfully with valid data', () => {\n    cy.visit('Mini Project/create-owner.html');\n    cy.get('input[name=name]').type('Test Owner');\n    cy.get('input[name=email]').type('test@example.com');\n    cy.get('input[name=password]').type('Password123');\n    cy.get('button[type=submit]').click();\n    cy.get('.message.success').should('be.visible');\n  });\n});"
+    }
+  ]
+}
